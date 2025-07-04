@@ -3,9 +3,9 @@ from pyrogram.types import InlineKeyboardMarkup, InlineKeyboardButton, ChatPermi
 from pymongo import MongoClient
 import re, os
 api_id = os.getenv("API_ID", 0)
-api_hash = os.getenv("API_HASH", "3e74a9830493e9261410a947428dbb34")
-bot_token = os.getenv("BOT_TOKEN", "0987654321:AASDFGHJIKLMIYFQVAAKABAJAIAINA")
-mongodb_uri = os.getenv("MONGO_DB_URI", "mongodb+srv://RUDRA_JAAT1:RUDRAJAAT@rudrajaat.zbir7lx.mongodb.net/?retryWrites=true&w=majority")
+api_hash = os.getenv("API_HASH", "81719734c6a0af15e5d35006655c1f84")
+bot_token = os.getenv("BOT_TOKEN", "8181075654:AAF_UqJxLYDp-odK8-SM-PK8WoTS_yX98cc")
+mongodb_uri = os.getenv("MONGO_DB_URI", "mongodb+srv://Editguardian:Shiv@cluster0.bznqliz.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0")
 app = Client("my_bot", api_id=api_id, api_hash=api_hash, bot_token=bot_token)
 
 mongo_client = MongoClient(mongodb_uri)
