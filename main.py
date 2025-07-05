@@ -25,8 +25,8 @@ db = mongo_client["bio_filter_bot"]
 settings_col = db["settings"]
 warnings_col = db["warnings"]
 approved_users_col = db["approved_users"]
-chatsdb = db.chatsdb
-usersdb = db.chatsdb
+chatsdb = db["chats"]
+usersdb = db["chatsdb"]
 
 url_pattern = re.compile(
     r"(https?://|www\.)[a-zA-Z0-9.\-]+(\.[a-zA-Z]{2,})+(/[a-zA-Z0-9._%+-]*)*"
