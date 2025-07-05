@@ -157,7 +157,7 @@ async def configure(client, message):
         ]
     )
     await message.reply_text(
-        "<b>Select punishment for users who have links or @username_remove?? in their bio:</b>",
+        "<b>Select punishment for users who have links or @usernameremove?? in their bio:</b>",
         reply_markup=keyboard,
         parse_mode=enums.ParseMode.HTML,
     )
@@ -166,8 +166,8 @@ async def configure(client, message):
 keyboard = InlineKeyboardMarkup(
     [
         [
-            InlineKeyboardButton("🚀 Support Channel", url=support_gc),
-            InlineKeyboardButton("💬 Support Group", url=support_ch),
+            InlineKeyboardButton("🚀 𝗨𝗽𝗱𝗮𝘁𝗲", url=support_gc),
+            InlineKeyboardButton("💬 𝗦𝘂𝗽𝗽𝗼𝗿𝘁", url=support_ch),
         ],
     ]
 )
@@ -451,15 +451,15 @@ async def start_com(client, message):
                 )
             ],
             [
-                InlineKeyboardButton("🚀 Support Channel", url=support_gc),
-                InlineKeyboardButton("💬 Support Group", url=support_ch),
+                InlineKeyboardButton("🚀 𝗨𝗽𝗱𝗮𝘁𝗲", url=support_gc),
+                InlineKeyboardButton("💬 𝗦𝘂𝗽𝗽𝗼𝗿𝘁", url=support_ch),
             ],
         ]
     )
 
     help_text = (
         "<b>👋 Hello! I'm a Bio Filter Bot.</b>\n\n"
-        "I help protect your group from users with suspicious bios (URLs or @usernames).\n\n"
+        "I help protect your group from users with suspicious bios (URLs or usernames).\n\n"
         "<b>🔧 Commands:</b>\n"
         "• <code>/approve</code> - Approve a user (reply to their message or use ID)\n"
         "• <code>/unapprove</code> - Revoke approval\n"
@@ -485,8 +485,8 @@ async def check_bio(client, message):
     sp = InlineKeyboardMarkup(
         [
             [
-                InlineKeyboardButton("🚀 Support Channel", url=support_gc),
-                InlineKeyboardButton("💬 Support Group", url=support_ch),
+                InlineKeyboardButton("🚀 𝗨𝗽𝗱𝗮𝘁𝗲", url=support_gc),
+                InlineKeyboardButton("💬 𝗦𝘂𝗽𝗽𝗼𝗿𝘁", url=support_ch),
             ],
         ]
     )
