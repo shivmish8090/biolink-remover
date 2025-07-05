@@ -1,6 +1,6 @@
 from pyrogram import Client, filters, enums
 from pyrogram.types import InlineKeyboardMarkup, InlineKeyboardButton, ChatPermissions
-from pymongo import MongoClient
+from pymongo import AsyncMongoClient
 import re, os
 from pyrogram.errors import FloodWait, UserIsBlocked, PeerIdInvalid, MessageNotModified
 
@@ -20,7 +20,7 @@ owner = os.getenv("OWNER_ID", "01234455")
 
 app = Client("my_bot", api_id=api_id, api_hash=api_hash, bot_token=bot_token)
 
-mongo_client = MongoClient(mongodb_uri)
+mongo_client = AsyncMongoClient(mongodb_uri)
 db = mongo_client["bio_filter_bot"]
 settings_col = db["settings"]
 warnings_col = db["warnings"]
@@ -74,50 +74,51 @@ async def add_served_chat(chat_id: int):
     cache["chats"].append(chat_id)
 
 
-def get_settings(chat_id):
-    setting = settings_col.find_one({"chat_id": chat_id})
+async def get_settings(chat_id):
+    setting = await settings_col.find_one({"chat_id": chat_id})
     return setting or {"chat_id": chat_id, "warn_limit": 3, "action": "mute"}
 
 
-def set_settings(chat_id, warn_limit, action):
-    settings_col.update_one(
+async def set_settings(chat_id, warn_limit, action):
+    await settings_col.update_one(
         {"chat_id": chat_id},
         {"$set": {"warn_limit": warn_limit, "action": action}},
         upsert=True,
     )
 
 
-def get_warnings(user_id):
-    doc = warnings_col.find_one({"user_id": user_id})
+async def get_warnings(user_id):
+    doc = await warnings_col.find_one({"user_id": user_id})
     return doc["count"] if doc else 0
 
 
-def add_warning(user_id):
-    warnings_col.update_one({"user_id": user_id}, {"$inc": {"count": 1}}, upsert=True)
-
-
-def clear_warning(user_id):
-    warnings_col.delete_one({"user_id": user_id})
-
-
-def is_approved(user_id, chat_id):
-    return (
-        approved_users_col.find_one({"user_id": user_id, "chat_id": chat_id})
-        is not None
+async def add_warning(user_id):
+    await warnings_col.update_one(
+        {"user_id": user_id},
+        {"$inc": {"count": 1}},
+        upsert=True,
     )
 
 
-def approve_user(user_id, chat_id):
-    approved_users_col.update_one(
+async def clear_warning(user_id):
+    await warnings_col.delete_one({"user_id": user_id})
+
+
+async def is_approved(user_id, chat_id):
+    doc = await approved_users_col.find_one({"user_id": user_id, "chat_id": chat_id})
+    return doc is not None
+
+
+async def approve_user(user_id, chat_id):
+    await approved_users_col.update_one(
         {"user_id": user_id, "chat_id": chat_id},
         {"$set": {"approved": True}},
         upsert=True,
     )
 
 
-def unapprove_user(user_id, chat_id):
-    approved_users_col.delete_one({"user_id": user_id, "chat_id": chat_id})
-
+async def unapprove_user(user_id, chat_id):
+    await approved_users_col.delete_one({"user_id": user_id, "chat_id": chat_id})
 
 async def is_admin(client, chat_id, user_id):
     async for member in client.get_chat_members(
@@ -138,7 +139,7 @@ async def configure(client, message):
             "<b>❌ You are not administrator</b>", parse_mode=enums.ParseMode.HTML
         )
 
-    current = get_settings(chat_id)
+    current = await get_settings(chat_id)
     keyboard = InlineKeyboardMarkup(
         [
             [InlineKeyboardButton("Warn", callback_data="warn")],
@@ -181,7 +182,7 @@ async def callback_handler(client, cq):
     if not await is_admin(client, chat_id, user_id):
         return await cq.answer("❌ You are not administrator", show_alert=True)
 
-    current = get_settings(chat_id)
+    current = await get_settings(chat_id)
 
     if data == "close":
         return await cq.message.delete()
@@ -219,12 +220,12 @@ async def callback_handler(client, cq):
         )
 
     elif data in ["mute", "ban"]:
-        set_settings(chat_id, current["warn_limit"], data)
+        await set_settings(chat_id, current["warn_limit"], data)
         return await configure(client, cq.message)
 
     elif data.startswith("warn_"):
         limit = int(data.split("_")[1])
-        set_settings(chat_id, limit, current["action"])
+        await set_settings(chat_id, limit, current["action"])
         return await configure(client, cq.message)
 
     elif data.startswith("unmute_"):
@@ -287,12 +288,12 @@ async def approve_user_command(client, message):
             "❌ Please reply to a message or provide a username/user ID."
         )
 
-    if is_approved(target_user.id, chat_id):
+    if await is_approved(target_user.id, chat_id):
         return await message.reply_text(
             "❌ This user is already approved in this group."
         )
 
-    approve_user(target_user.id, chat_id)
+    await approve_user(target_user.id, chat_id)
     await message.reply_text(
         f"✅ User {target_user.mention} has been approved for this group."
     )
@@ -331,10 +332,10 @@ async def unapprove_user_command(client, message):
             "❌ Please reply to a message or provide a username/user ID."
         )
 
-    if not is_approved(target_user.id, chat_id):
+    if not await is_approved(target_user.id, chat_id):
         return await message.reply_text("❌ This user is not approved in this group.")
 
-    unapprove_user(target_user.id, chat_id)
+    await unapprove_user(target_user.id, chat_id)
     await message.reply_text(
         f"❌ User {target_user.mention} has been unapproved from this group."
     )
@@ -490,7 +491,7 @@ async def check_bio(client, message):
         ]
     )
 
-    if is_approved(user_id, chat_id):
+    if await is_approved(user_id, chat_id):
         return
     try:
         user_full = await client.get_chat(user_id)
@@ -506,9 +507,9 @@ async def check_bio(client, message):
         except Exception:
             return await message.reply_text("❌ Grant me delete message permissions.")
 
-        current = get_settings(chat_id)
-        warn_count = get_warnings(user_id) + 1
-        add_warning(user_id)
+        current = await get_settings(chat_id)
+        warn_count = await get_warnings(user_id) + 1
+        await add_warning(user_id)
 
         text = f"🚨 {username}, your message was deleted because your bio contains a link.n\nWarning {warn_count}/{current['warn_limit']}"
         reply = await message.reply_text(text, reply_markup=sp)
@@ -545,7 +546,7 @@ async def check_bio(client, message):
                 await reply.edit(
                     f"I don't have permission to {current['action']} users."
                 )
-            clear_warning(user_id)
+            await clear_warning(user_id)
 
 
 app.run()
