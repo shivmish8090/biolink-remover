@@ -1,43 +1,50 @@
 {
-    "name": "Edit",
-    "description": "Nothing",
-    "logo": "https://graph.org/file/c0e014ff34f34d1056627.png",
-    "keywords": [
+  "name": "Edit",
+  "description": "Nothing",
+  "logo": "https://graph.org/file/c0e014ff34f34d1056627.png",
+  "keywords": [
     "telegram-bot",
     "pyrogram"
-    ],
-
-    "env": {
-      "API_ID": {
-        "description": "Get this value from https://my.telegram.org",
-        "value": "",
-        "required": true
-      },
-      "API_HASH": {
-        "description": "Get this value from https://my.telegram.org",
-        "value": "",
-        "required": true
-      },
-      "BOT_TOKEN": {
-        "description": "A Bot's token Get it from Botfather",
-        "value": "",
-        "required": true
-      },
-      "MONGO_DB_URI": {
-        "description": "Get a mongodb url from https://cloud.mongodb.com . You can leave it blank if you want , bot will use Yukki's database for you.",
-        "value": "",
-        "required": false
-      }
+  ],
+  "env": {
+    "API_ID": {
+      "description": "Get this value from https://my.telegram.org",
+      "required": true
     },
-    "buildpacks": [
-          {
-              "url": "heroku/python"
-          }
-      ],
-      "formation": {
-          "worker": {
-              "quantity": 1,
-              "size": "basic"
-          }
-      }
+    "API_HASH": {
+      "description": "Get this value from https://my.telegram.org",
+      "required": true
+    },
+    "BOT_TOKEN": {
+      "description": "Get a bot token from @BotFather",
+      "required": true
+    },
+    "MONGO_DB_URI": {
+      "description": "MongoDB URI from https://cloud.mongodb.com",
+      "required": true
+    },
+    "SUPPORT_GROUP": {
+      "description": "Link to your support group",
+      "required": true
+    },
+    "SUPPORT_CHANNEL": {
+      "description": "Link to your support channel",
+      "required": true
+    },
+    "OWNER_ID": {
+      "description": "Telegram User ID of the bot owner",
+      "required": true
+    }
+  },
+  "buildpacks": [
+    {
+      "url": "heroku/python"
+    }
+  ],
+  "formation": {
+    "worker": {
+      "quantity": 1,
+      "size": "basic"
+    }
   }
+}

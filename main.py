@@ -2,6 +2,10 @@ from pyrogram import Client, filters, enums
 from pyrogram.types import InlineKeyboardMarkup, InlineKeyboardButton, ChatPermissions
 from pymongo import MongoClient
 import re, os
+from pyrogram.errors import FloodWait, UserIsBlocked, PeerIdInvalid, MessageNotModified
+
+import asyncio
+
 
 api_id = os.getenv("API_ID", 0)
 api_hash = os.getenv("API_HASH", "81719734c6a0af15e5d35006655c1f84")
@@ -33,7 +37,7 @@ cache = {
     "users": [],
     "chats": [],
 }
-
+is_broadcasting = False
 # --- USERS ---
 
 
@@ -371,6 +375,69 @@ async def stats(client, message):
     await message.reply(f"Total Chats: {x}\nTotal users: {y}")
 
 
+@app.on_message(
+    filters.command(["gcast", "broadband", "gcastpin", "broadbandpin"])
+    & filters.user(owner)
+)
+async def gcast_command(client, message):
+    global is_broadcasting
+    if is_broadcasting:
+        return await message.reply_text("⚠️ A broadcast is already in progress.")
+
+    is_broadcasting = True
+    chats = await get_served_chats()
+    users = await get_served_users()
+    targets = list(set(chats + users))
+
+    pin = message.command[0].endswith("pin")
+
+    if message.reply_to_message:
+        msg = message.reply_to_message
+    elif len(message.command) > 1:
+        msg_text = message.text.split(None, 1)[1]
+        msg = None
+    else:
+        is_broadcasting = False
+        return await message.reply_text(
+            "❌ Provide text or reply to a message to broadcast."
+        )
+
+    panel = await message.reply_text("📣 Broadcasting Message...")
+
+    success = 0
+    failed = 0
+
+    for i, chat_id in enumerate(targets):
+        try:
+            if msg:
+                sent = await msg.copy(chat_id)
+            else:
+                sent = await client.send_message(chat_id, msg_text)
+            if pin:
+                try:
+                    await sent.pin(disable_notification=False)
+                except Exception:
+                    pass
+
+            success += 1
+        except FloodWait as e:
+            try:
+                await panel.edit(f"⏸️ Sleeping for {e.value} seconds due to FloodWait.")
+            except Exception:
+                pass
+            await asyncio.sleep(e.value)
+        except (UserIsBlocked, PeerIdInvalid, MessageNotModified):
+            failed += 1
+        except Exception:
+            failed += 1
+        await asyncio.sleep(0.1)
+
+    await panel.edit(
+        f"📢 Broadcast Complete\n✅ Success: {success}\n❌ Failed: {failed}"
+    )
+    is_broadcasting = False
+
+
 @app.on_message(filters.command("start"))
 async def start_com(client, message):
     x = await client.get_me()
@@ -397,7 +464,9 @@ async def start_com(client, message):
         "• <code>/unapprove</code> - Revoke approval\n"
         "• <code>/approvelist</code> - List all approved users\n"
         "• <code>/config</code> - Set warnings & punishment\n"
-        "• <code>/stats</code> - Show usage stats (owner only)\n\n"
+        "• <code>/stats</code> - Show usage stats (owner only)\n"
+        "• <code>/gcast</code> or <code>/broadband</code> - Broadcast a message to all users/groups\n"
+        "• <code>/gcastpin</code> or <code>/broadbandpin</code> - Broadcast and pin the message\n\n"
         "Add me to your group and make me admin to get started!"
     )
     await add_served_user(message.from_user.id)
